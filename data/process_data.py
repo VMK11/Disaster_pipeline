@@ -1,11 +1,24 @@
 import sys
-
+import pandas as pd
 
 def load_data(messages_filepath, categories_filepath):
-    pass
+    """
+    Load messages.csv & categories.csv and return a merged dataframe
+    :param messages_filepath:
+    :param categories_filepath:
+    :return: merged_df
+    """
+    messages_df            = pd.read_csv(messages_filepath)
+    categories_df          = pd.read_csv(categories_filepath)
 
+    return pd.merge(messages_df, categories_df, on="id")
 
 def clean_data(df):
+    """
+
+    :param df:
+    :return:
+    """
     pass
 
 
