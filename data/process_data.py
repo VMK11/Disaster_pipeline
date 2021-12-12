@@ -1,7 +1,11 @@
-import sys
-import numpy as np
-import pandas as pd
+"""Data Wrangling"""
+import numpy    as np
+import pandas   as pd
 from sqlalchemy import create_engine
+
+"""Mescellaneous"""
+import re
+import sys
 
 def load_data(messages_filepath, categories_filepath):
     """
@@ -23,20 +27,24 @@ def clean_data(df):
     3. Drop categories columns from the initial dataframe
     4. Concatenate the dataframe with the categories dataframe
     5. Drop the duplicate records.
+    6. Remove links from messages.
+
 
     :param df:
     :return df:
     """
     categories = df.categories.str.split(pat=';', expand=True)
     firstrow = categories.iloc[0,:]
-    category_colnames =  list(map(lambda i: i[ : -2], firstrow)) 
+    category_colnames =  firstrow.apply(lambda x:x[:-2])
     categories.columns = category_colnames
     for column in categories:
         categories[column] = categories[column].str[-1]
-        categories[column] = categories[column].astype(np.int)
+        categories[column] = categories[column].astype(np.int64)
     df.drop('categories', axis=1, inplace=True)
     df = pd.concat([df, categories], join='inner', axis=1)
     df.drop_duplicates(inplace=True)
+    # Remove links
+    df['message'] = df.message.str.replace('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', ' ')
 
     return df
 
