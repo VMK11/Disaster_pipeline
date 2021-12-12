@@ -3,6 +3,10 @@ import numpy    as np
 import pandas   as pd
 from sqlalchemy import create_engine
 
+"""Text Preprocessing"""
+from nltk.corpus import stopwords
+nltk.download('stopwords')
+
 """Mescellaneous"""
 import re
 import sys
@@ -24,10 +28,11 @@ def clean_data(df):
     """
     1. Splits the strings into different categories.
     2. Extract column names from the first row.
-    3. Drop categories columns from the initial dataframe
-    4. Concatenate the dataframe with the categories dataframe
+    3. Drop categories columns from the initial dataframe.
+    4. Concatenate the dataframe with the categories dataframe.
     5. Drop the duplicate records.
     6. Remove links from messages.
+    7. Remove puncuation.
 
 
     :param df:
@@ -43,8 +48,9 @@ def clean_data(df):
     df.drop('categories', axis=1, inplace=True)
     df = pd.concat([df, categories], join='inner', axis=1)
     df.drop_duplicates(inplace=True)
-    # Remove links
     df['message'] = df.message.str.replace('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', ' ')
+    df['message'] = df['message'].str.replace('[^\w\s]','')
+    df['message'] = df['message'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
 
     return df
 
