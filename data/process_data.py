@@ -3,14 +3,6 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import create_engine
 
-def create_columns(firstrow):
-    column_names = []
-    for category_name in firstrow.values[0]:
-        column_names.append(category_name.split('-')[0])
-    
-    return column_names
-
-
 def load_data(messages_filepath, categories_filepath):
     """
     Load messages.csv & categories.csv and return a merged dataframe
@@ -36,8 +28,8 @@ def clean_data(df):
     :return df:
     """
     categories = df.categories.str.split(pat=';', expand=True)
-    firstrow = categories.head(n=1)
-    category_colnames = firstrow.apply(lambda firstrow: create_columns(), axis=1)[0]
+    firstrow = categories.iloc[0,:]
+    category_colnames =  list(map(lambda i: i[ : -2], firstrow)) 
     categories.columns = category_colnames
     for column in categories:
         categories[column] = categories[column].str[-1]
