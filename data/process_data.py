@@ -61,7 +61,7 @@ def clean_data(df):
     df = df[df.message != 'url_placeholder']
     df['message'] = df['message'].str.replace('[^\w\s]','')
     df['message'] = df['message'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
-
+    df.drop(columns=['related', 'child_alone'], axis=1, inplace=True)
     return df
 
 
