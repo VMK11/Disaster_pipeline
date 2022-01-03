@@ -7,17 +7,22 @@ from sqlalchemy import create_engine
 from nltk.corpus import stopwords
 nltk.download('stopwords')
 
-"""Mescellaneous"""
+"""Miscellaneous"""
 import re
 import sys
+import os
 
 def load_data(messages_filepath, categories_filepath):
+    """Load messages.csv & categories.csv and return a merged dataframe.
+
+    Args:
+        messages_filepath (String)      : Messages Dataset (.CSV) path.
+        categories_filepath (String))   : Categories Dataset (.CSV) path.
+
+    Returns:
+        DataFrame: Messages & categories merged dataframe.
     """
-    Load messages.csv & categories.csv and return a merged dataframe
-    :param messages_filepath:
-    :param categories_filepath:
-    :return: merged_df
-    """
+
     messages_df = pd.read_csv(messages_filepath)
     categories_df = pd.read_csv(categories_filepath)
 
@@ -25,30 +30,34 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
-    """
-    1. Splits the strings into different categories.
-    2. Extract column names from the first row.
-    3. Drop categories columns from the initial dataframe.
-    4. Concatenate the dataframe with the categories dataframe.
-    5. Drop the duplicate records.
-    6. Remove links from messages.
-    7. Remove puncuation.
+    """[summary]
 
+    Args:
+        df (DataFrame): DataFrame containing the text messages and the corresponding target labels..
 
-    :param df:
-    :return df:
+    Returns:
+        df (DataFrame): Cleaned dataframe.
     """
+
+    # Load english stop words
+    stop = stopwords.words("english")
+    
+    # Extract target labels from column names.
     categories = df.categories.str.split(pat=';', expand=True)
     firstrow = categories.iloc[0,:]
     category_colnames =  firstrow.apply(lambda x:x[:-2])
     categories.columns = category_colnames
+
     for column in categories:
         categories[column] = categories[column].str[-1]
         categories[column] = categories[column].astype(np.int64)
     df.drop('categories', axis=1, inplace=True)
     df = pd.concat([df, categories], join='inner', axis=1)
     df.drop_duplicates(inplace=True)
-    df['message'] = df.message.str.replace('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', ' ')
+
+    # Remove links & puncuation from the text.
+    df['message'] = df.message.str.replace('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', 'url_placeholder')
+    df = df[df.message != 'url_placeholder']
     df['message'] = df['message'].str.replace('[^\w\s]','')
     df['message'] = df['message'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
 
@@ -57,14 +66,24 @@ def clean_data(df):
 
 def save_data(df, database_filename):
     """
+
+    Args:
+        df ([type]): [description]
+        database_filename ([type]): [description]
+    """
+
+    """
     Saves the data into a database file.
     :param df:
     :param database_filename:
     :return:
     """
-    engine = create_engine('sqlite:///' + database_filename)
-    df.to_sql('df', engine, index=False)
 
+    engine = create_engine(f'sqlite:///{database_filename}')
+    table_name = os.path.basename(
+        database_filename).replace(".db", "") + "_table"
+    df.to_sql(table_name, engine, index=False)
+    
 
 def main():
     if len(sys.argv) == 4:
