@@ -4,6 +4,7 @@ import pandas   as pd
 from sqlalchemy import create_engine
 
 """Text Preprocessing"""
+import nltk
 from nltk.corpus import stopwords
 nltk.download('stopwords')
 

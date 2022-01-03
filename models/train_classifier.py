@@ -31,7 +31,7 @@ from WordVectorTransformer import WordVectorTransformer
 nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger'])
 
 
-def load_data(database_filepath='./data/disasterResponse_db.db'):
+def load_data(database_filepath='./data/DisasterResponse.db'):
     """Load message data from the database.
 
     Args:
@@ -42,7 +42,7 @@ def load_data(database_filepath='./data/disasterResponse_db.db'):
     """
     
     engine          = create_engine(f'sqlite:///{database_filepath}')
-    df              = pd.read_sql_table('disasterResponse_db_table', engine)
+    df              = pd.read_sql_table('DisasterResponse_table', engine)
     df.drop(columns=['child_alone'], axis=1, inplace=True)
     X               = df['message']
     Y               = df.iloc[:,5:]
