@@ -26,7 +26,7 @@ def load_data(messages_filepath : str, categories_filepath : str) -> pd.DataFram
 
     messages_df     = pd.read_csv(messages_filepath)
     categories_df   = pd.read_csv(categories_filepath)
-
+    
     return pd.merge(messages_df, categories_df, on="id")
 
 

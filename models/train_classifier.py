@@ -1,4 +1,5 @@
 """Data Wrangling"""
+from scipy.stats                        import uniform, truncnorm, randint
 import pandas                           as pd
 import numpy                            as np
 from sqlalchemy                         import create_engine
@@ -8,25 +9,26 @@ import sys
 import re
 import pickle
 import nltk
-from nltk.tokenize                      import word_tokenize,sent_tokenize
+from nltk.tokenize                      import word_tokenize, sent_tokenize
 from nltk.stem                          import WordNetLemmatizer
 from nltk.corpus                        import stopwords
 import                                  spacy
 
 """Machine Learning"""
 from sklearn.metrics                    import confusion_matrix
-from sklearn.model_selection            import train_test_split
+from sklearn.model_selection            import RandomizedSearchCV, train_test_split, GridSearchCV
 from sklearn.linear_model               import LogisticRegression
 from sklearn.feature_extraction.text    import CountVectorizer, TfidfTransformer, TfidfVectorizer
 from sklearn.multioutput                import MultiOutputClassifier
 from sklearn.pipeline                   import Pipeline
-from sklearn.metrics                    import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics                    import accuracy_score, precision_score, recall_score, f1_score, make_scorer
 from sklearn.multioutput                import ClassifierChain
 from sklearn.decomposition              import TruncatedSVD
 import                                  joblib
 
 """Miscellaneous"""
 from WordVectorTransformer import WordVectorTransformer
+from os.path                import exists
 
 nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger'])
 
@@ -43,7 +45,6 @@ def load_data(database_filepath='./data/DisasterResponse.db'):
     
     engine          = create_engine(f'sqlite:///{database_filepath}')
     df              = pd.read_sql_table('DisasterResponse_table', engine)
-    df.drop(columns=['child_alone'], axis=1, inplace=True)
     X               = df['message']
     Y               = df.iloc[:,5:]
     category_names  = Y.columns
@@ -51,7 +52,7 @@ def load_data(database_filepath='./data/DisasterResponse.db'):
     return X, Y, category_names
 
 def tokenize(text):
-    """Tokenization Function
+    """Tokenization Function.
 
     Args:
         text (String)   : List of text messages in english.
@@ -69,24 +70,73 @@ def tokenize(text):
 
     return clean_tokens
 
-def build_model():
-    """Constructs the pipeline with the neari optimal hyper-parameters found from GridSearchCV.
-
+def eval_metric_f1(y_true, y_pred):
+    """Calculate median F1 score for all of the output classifiers
+    
+    Args:
+    y_true: array. Array containing actual labels.
+    y_pred: array. Array containing predicted labels.
+        
     Returns:
-        pipeline (Pipeline Object : scikit-learn): Pipeline object.
+    score: float. Median F1 score for all of the output classifiers
     """
+    f1_metric = []
+    for i in range(np.shape(y_pred)[1]):
+        f1 = f1_score(np.array(y_true)[:, i], y_pred[:, i], average='micro')
+        f1_metric.append(f1)
+
+    return np.median(f1_metric)
+
+def build_model():
+    """Constructs the pipeline with the near optimal hyper-parameters found from GridSearchCV. 
+       
+    Returns:
+        pipeline (Pickle Object) : The seriealized pipeline object.
+    """
+
+    # Pipeline initialization
     pipeline = Pipeline([
         ('vect',      WordVectorTransformer()),
         ('trnc_svd',  TruncatedSVD(n_components=10, n_iter=5)),
         ('clf_chain', ClassifierChain(LogisticRegression(
             solver='lbfgs', random_state=0), order='random', random_state=42))
     ])
-       
+
+    # Hyper-parameters dictionary
+    param_grid = {
+        # -------------------- CLF ------------------------------
+        # randomly sample numbers from 4 to 204 estimators
+        'clf__estimator__n_estimators': randint(4, 20),
+        # normally distributed max_features, with mean .25 stddev 0.1, bounded between 0 and 1
+        'clf__estimator__max_features': truncnorm(a=0, b=1, loc=0.25, scale=0.1),
+        # uniform distribution from 0.01 to 0.2 (0.01 + 0.199)
+        'clf__estimator__min_samples_split': uniform(0.01, 0.199),
+        # -------------------- Vectorizer -----------------------
+        'vect__ngram_range': ((1, 1), (1, 2)),
+        'vect__max_df': ((0.5, 0.75)),
+        'vect__min_df': [1, 5]
+    }
+
+    
+    # Optimize pipeline using GridSearchCV.
+    if exists('pipeline_optimized.pkl'):
+        print('Optimized Pipeline exists - Loading pickle file')
+        pipeline_optimized = joblib.load('pipeline_optimized.pkl')
+    else:
+        print('Pipeline Fitting...')
+        pipeline_optimized = RandomizedSearchCV(estimator               =   pipeline,
+                                                param_distributions     =   param_grid,
+                                                scoring                 =   make_scorer(eval_metric_f1),
+                                                cv                      =   10,
+                                                verbose                 =   2,
+                                                n_iter                  =   10,
+                                                n_jobs                  =   -1)
+
     return pipeline
 
 def eval_metrics(ArrayL, ArrayP, col_names):
 
-    """
+    """ Evalulate classifier's performance using [Accuracy, Precission, Recall, F1_score]
     Github: https://github.com/atwahsz/Disaster-Response-Pipeline/blob/master/ML%20Pipeline%20Preparation.ipynb
     """
 
