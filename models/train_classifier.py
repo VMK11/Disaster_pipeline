@@ -32,7 +32,6 @@ from os.path                import exists
 
 nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger'])
 
-
 def load_data(database_filepath='./data/DisasterResponse.db'):
     """Load message data from the database.
 
