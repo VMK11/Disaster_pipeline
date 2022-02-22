@@ -45,18 +45,27 @@ def index():
     # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
+    genres_percentage = round(100*genre_counts/genre_counts.sum(), 2)
+    
+    cat_num = df.drop(['id', 'message', 'original', 'genre'], axis = 1).sum()
+    cat_num = cat_num.sort_values(ascending = False)
+    cat = list(cat_num.index)
+    
+    colors = ['yellow', 'green', 'red']
     
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
+            # Data for Bar Chart
             'data': [
                 Bar(
                     x=genre_names,
                     y=genre_counts
                 )
             ],
-
+            
+            # Layout for Bar Chart
             'layout': {
                 'title': 'Distribution of Message Genres',
                 'yaxis': {
@@ -65,8 +74,43 @@ def index():
                 'xaxis': {
                     'title': "Genre"
                 }
+            } 
+        },
+        ########################
+        {
+            "data": [
+              {
+                "type": "pie",
+                "uid": "f4de1f",
+                "hole": 0.4,
+                "name": "Genre",
+                "pull": 0,
+                "domain": {
+                  "x": genres_percentage,
+                  "y": genre_names
+                },
+                "marker": {
+                  "colors": [
+                    "#7fc97f",
+                    "#beaed4",
+                    "#fdc086"
+                   ]
+                },
+                "textinfo": "label+value",
+                "hoverinfo": "all",
+                "labels": genre_names,
+                "values": genre_counts
+              }
+            ],
+            "layout": {
+              "title": "Count and Percent of Messages by Genre"
             }
-        }
+        },
+        
+        
+        
+        
+        
     ]
     
     # encode plotly graphs in JSON

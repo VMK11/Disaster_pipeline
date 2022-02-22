@@ -95,7 +95,8 @@ def build_model():
 
     # Pipeline initialization
     pipeline = Pipeline([
-        ('vect',      WordVectorTransformer()),
+        ('vect', CountVectorizer()),
+        ('tfidf', TfidfTransformer()),
         ('trnc_svd',  TruncatedSVD(n_components=10, n_iter=5)),
         ('clf_chain', ClassifierChain(LogisticRegression(
             solver='lbfgs', random_state=0), order='random', random_state=42))
