@@ -12,12 +12,28 @@ Text from various sources has been provided e.g. news, social media, etc. for tr
 The app is based on Flask framework and provides a UI and informative visualizations about the text data received for training.
 
 ## Project Structure
-- app
-- data
-- models
+- app: Contain files for hosting/running the Web app.
+    - __init__.py
+    - WordVectorTransformer.py (Not used currently)
+    - run.py
+    - templates
+- data: Contain python code for data preprocessing and database generation.
+    - __init__.py
+    - disaster_categories.csv
+    - disaster_messages.csv
+    - DisasterResponse.db
+    - ETL Pipeline Preparation.ipynb
+    - process_data.py
+- models: Contain python code for ML training and model evaluation.
+    - __init__.py
+    - classifier.pkl
+    - ML Pipeline Preparation.ipynb
+    - train_classifier.py
+    - WordVectorTransformer.py (Not used currently)
+- README.md
+- requirements.txt
 
-
-### Instructions:
+## Instructions:
 1. Run the following commands in the project's root directory to set up your database and model.
 
     - To run ETL pipeline that cleans data and stores in database
@@ -29,3 +45,8 @@ The app is based on Flask framework and provides a UI and informative visualizat
     `python run.py`
 
 3. Go to http://0.0.0.0:3001/
+
+## Acknowledgments 
+Many thanks to atwahsz for providing the function for evaluating the ML model's performance!
+
+Repo: https://github.com/atwahsz/Disaster-Response-Pipeline/blob/master/ML%20Pipeline%20Preparation.ipynb
