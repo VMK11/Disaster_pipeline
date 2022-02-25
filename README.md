@@ -46,7 +46,7 @@ The app is based on Flask framework and provides a UI and informative visualizat
 
 3. Go to http://0.0.0.0:3001/
 
-## Acknowledgments 
+## Acknowledgments
 Many thanks to atwahsz for providing the function for evaluating the ML model's performance!
 
 Repo: https://github.com/atwahsz/Disaster-Response-Pipeline/blob/master/ML%20Pipeline%20Preparation.ipynb
